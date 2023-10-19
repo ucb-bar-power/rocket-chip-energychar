@@ -583,10 +583,18 @@ class Rocket(tile: RocketTile)(implicit p: Parameters) extends CoreModule()(p)
 
   // memory stage
   val mem_pc_valid = mem_reg_valid || mem_reg_replay || mem_reg_xcpt_interrupt
-  val mem_br_target = mem_reg_pc.asSInt +
-    Mux(mem_ctrl.branch && mem_br_taken, ImmGen(IMM_SB, mem_reg_inst),
-    Mux(mem_ctrl.jal, ImmGen(IMM_UJ, mem_reg_inst),
-    Mux(mem_reg_rvc, 2.S, 4.S)))
+  // >> nk
+  // val mem_br_target = mem_reg_pc.asSInt +
+  //   Mux(mem_ctrl.branch && mem_br_taken, ImmGen(IMM_SB, mem_reg_inst),
+  //   Mux(mem_ctrl.jal, ImmGen(IMM_UJ, mem_reg_inst),
+  //   Mux(mem_reg_rvc, 2.S, 4.S)))
+  val my_adder_brpc = Module(new MyAdder(SInt()))
+  my_adder_brpc.io.in1 := mem_reg_pc.asSInt
+  my_adder_brpc.io.in2 := Mux(mem_ctrl.branch && mem_br_taken, ImmGen(IMM_SB, mem_reg_inst),
+                          Mux(mem_ctrl.jal, ImmGen(IMM_UJ, mem_reg_inst),
+                          Mux(mem_reg_rvc, 2.S, 4.S)))
+  val mem_br_target = my_adder_brpc.io.out
+  // << nk
   val mem_npc = (Mux(mem_ctrl.jalr || mem_reg_sfence, encodeVirtualAddress(mem_reg_wdata, mem_reg_wdata).asSInt, mem_br_target) & (-2).S).asUInt
   val mem_wrong_npc =
     Mux(ex_pc_valid, mem_npc =/= ex_reg_pc,

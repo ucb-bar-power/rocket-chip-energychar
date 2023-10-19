@@ -7,7 +7,6 @@ import chisel3._
 import chisel3.util.{BitPat, Fill, Cat, Reverse}
 import org.chipsalliance.cde.config.Parameters
 import freechips.rocketchip.tile.CoreModule
-import freechips.rocketchip.rocket.power._
 
 class ALUFN {
   val SZ_ALU_FN = 4
