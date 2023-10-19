@@ -7,6 +7,7 @@ import chisel3._
 import chisel3.util.{BitPat, Fill, Cat, Reverse}
 import org.chipsalliance.cde.config.Parameters
 import freechips.rocketchip.tile.CoreModule
+import freechips.rocketchip.rocket.power._
 
 class ALUFN {
   val SZ_ALU_FN = 4
@@ -138,7 +139,13 @@ class ALU(implicit p: Parameters) extends AbstractALU(new ALUFN)(p) {
   // ADD, SUB
   val in2_inv = Mux(aluFn.isSub(io.fn), ~io.in2, io.in2)
   val in1_xor_in2 = io.in1 ^ in2_inv
-  io.adder_out := io.in1 + in2_inv + aluFn.isSub(io.fn)
+  // >> nk
+  // io.adder_out := io.in1 + in2_inv + aluFn.isSub(io.fn)
+  val my_adder_alu = Module(new MyAdder(UInt(xLen.W)))
+  my_adder_alu.io.in1 := io.in1
+  my_adder_alu.io.in2 := in2_inv
+  io.adder_out := my_adder_alu.io.out + aluFn.isSub(io.fn)
+  // << nk
 
   // SLT, SLTU
   val slt =
