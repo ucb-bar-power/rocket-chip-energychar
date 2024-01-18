@@ -1064,110 +1064,110 @@ class Rocket(tile: RocketTile)(implicit p: Parameters) extends CoreModule()(p)
 
   val (cycle_counter, _) = Counter(true.B, 1000000000) // timeout cycles
 
-  when (false.B) {
-    printf("EVENT %d Rocket (exception)\n", cycle_counter)
-  }
-  when (id_ctrl.mem && id_ctrl.mem_cmd === M_XRD && !id_ctrl.fp) {
-    printf("EVENT %d Rocket (load)\n", cycle_counter)
-  }
-  when (id_ctrl.mem && id_ctrl.mem_cmd === M_XWR && !id_ctrl.fp) {
-    printf("EVENT %d Rocket (store)\n", cycle_counter)
-  }
-  when (usingAtomics.B && id_ctrl.mem && (isAMO(id_ctrl.mem_cmd) || id_ctrl.mem_cmd.isOneOf(M_XLR, M_XSC))) {
-    printf("EVENT %d Rocket (amo)\n", cycle_counter)
-  }
-  when (id_ctrl.csr =/= CSR.N) {
-    printf("EVENT %d Rocket (system)\n", cycle_counter)
-  }
-  when (id_ctrl.wxd && !(id_ctrl.jal || id_ctrl.jalr || id_ctrl.mem || id_ctrl.fp || id_ctrl.mul || id_ctrl.div || id_ctrl.csr =/= CSR.N)) {
-    printf("EVENT %d Rocket (arith)\n", cycle_counter)
-  }
-  when (id_ctrl.branch) {
-    printf("EVENT %d Rocket (branch)\n", cycle_counter)
-  }
-  when (id_ctrl.jal) {
-    printf("EVENT %d Rocket (jal)\n", cycle_counter)
-  }
-  when (id_ctrl.jalr) {
-    printf("EVENT %d Rocket (jalr)\n", cycle_counter)
-  }
-  when (if (pipelinedMul) id_ctrl.mul else id_ctrl.div && (id_ctrl.alu_fn & aluFn.FN_DIV) =/= aluFn.FN_DIV) {
-    printf("EVENT %d Rocket (mul)\n", cycle_counter)
-  }
-  when (if (pipelinedMul) id_ctrl.div else id_ctrl.div && (id_ctrl.alu_fn & aluFn.FN_DIV) === aluFn.FN_DIV) {
-    printf("EVENT %d Rocket (div)\n", cycle_counter)
-  }
-  when (id_ctrl.fp && io.fpu.dec.ldst && io.fpu.dec.wen) {
-    printf("EVENT %d Rocket (fp load)\n", cycle_counter)
-  }
-  when (id_ctrl.fp && io.fpu.dec.ldst && !io.fpu.dec.wen) {
-    printf("EVENT %d Rocket (fp store)\n", cycle_counter)
-  }
-  when (id_ctrl.fp && io.fpu.dec.fma && io.fpu.dec.swap23) {
-    printf("EVENT %d Rocket (fp add)\n", cycle_counter)
-  }
-  when (id_ctrl.fp && io.fpu.dec.fma && !io.fpu.dec.swap23 && !io.fpu.dec.ren3) {
-    printf("EVENT %d Rocket (fp mul)\n", cycle_counter)
-  }
-  when (id_ctrl.fp && io.fpu.dec.fma && io.fpu.dec.ren3) {
-    printf("EVENT %d Rocket (fp mul-add)\n", cycle_counter)
-  }
-  when (id_ctrl.fp && (io.fpu.dec.div || io.fpu.dec.sqrt)) {
-    printf("EVENT %d Rocket (fp div/sqrt)\n", cycle_counter)
-  }
-  when (id_ctrl.fp && !(io.fpu.dec.ldst || io.fpu.dec.fma || io.fpu.dec.div || io.fpu.dec.sqrt)) {
-    printf("EVENT %d Rocket (fp other)\n", cycle_counter)
-  }
-  when (id_ex_hazard && ex_ctrl.mem || id_mem_hazard && mem_ctrl.mem || id_wb_hazard && wb_ctrl.mem) {
-    printf("EVENT %d Rocket (load-use interlock)\n", cycle_counter)
-  }
-  when (id_sboard_hazard) {
-    printf("EVENT %d Rocket (long-latency interlock)\n", cycle_counter)
-  }
-  when (id_ex_hazard && ex_ctrl.csr =/= CSR.N || id_mem_hazard && mem_ctrl.csr =/= CSR.N || id_wb_hazard && wb_ctrl.csr =/= CSR.N) {
-    printf("EVENT %d Rocket (csr interlock)\n", cycle_counter)
-  }
-  when (icache_blocked) {
-    printf("EVENT %d Rocket (I$ blocked)\n", cycle_counter)
-  }
-  when (id_ctrl.mem && dcache_blocked) {
-    printf("EVENT %d Rocket (D$ blocked)\n", cycle_counter)
-  }
-  when (take_pc_mem && mem_direction_misprediction) {
-    printf("EVENT %d Rocket (branch misprediction)\n", cycle_counter)
-  }
-  when (take_pc_mem && mem_misprediction && mem_cfi && !mem_direction_misprediction && !icache_blocked) {
-    printf("EVENT %d Rocket (control-flow target misprediction)\n", cycle_counter)
-  }
-  when (wb_reg_flush_pipe) {
-    printf("EVENT %d Rocket (flush)\n", cycle_counter)
-  }
-  when (replay_wb) {
-    printf("EVENT %d Rocket (replay)\n", cycle_counter)
-  }
-  when (id_ex_hazard && (ex_ctrl.mul || ex_ctrl.div) || id_mem_hazard && (mem_ctrl.mul || mem_ctrl.div) || id_wb_hazard && wb_ctrl.div) {
-    printf("EVENT %d Rocket (mul/div interlock)\n", cycle_counter)
-  }
-  when (id_ex_hazard && ex_ctrl.fp || id_mem_hazard && mem_ctrl.fp || id_wb_hazard && wb_ctrl.fp || id_ctrl.fp && id_stall_fpu) {
-    printf("EVENT %d Rocket (fp interlock)\n", cycle_counter)
-  }
+  // when (false.B) {
+  //   printf("EVENT %d Rocket (exception)\n", cycle_counter)
+  // }
+  // when (id_ctrl.mem && id_ctrl.mem_cmd === M_XRD && !id_ctrl.fp) {
+  //   printf("EVENT %d Rocket (load)\n", cycle_counter)
+  // }
+  // when (id_ctrl.mem && id_ctrl.mem_cmd === M_XWR && !id_ctrl.fp) {
+  //   printf("EVENT %d Rocket (store)\n", cycle_counter)
+  // }
+  // when (usingAtomics.B && id_ctrl.mem && (isAMO(id_ctrl.mem_cmd) || id_ctrl.mem_cmd.isOneOf(M_XLR, M_XSC))) {
+  //   printf("EVENT %d Rocket (amo)\n", cycle_counter)
+  // }
+  // when (id_ctrl.csr =/= CSR.N) {
+  //   printf("EVENT %d Rocket (system)\n", cycle_counter)
+  // }
+  // when (id_ctrl.wxd && !(id_ctrl.jal || id_ctrl.jalr || id_ctrl.mem || id_ctrl.fp || id_ctrl.mul || id_ctrl.div || id_ctrl.csr =/= CSR.N)) {
+  //   printf("EVENT %d Rocket (arith)\n", cycle_counter)
+  // }
+  // when (id_ctrl.branch) {
+  //   printf("EVENT %d Rocket (branch)\n", cycle_counter)
+  // }
+  // when (id_ctrl.jal) {
+  //   printf("EVENT %d Rocket (jal)\n", cycle_counter)
+  // }
+  // when (id_ctrl.jalr) {
+  //   printf("EVENT %d Rocket (jalr)\n", cycle_counter)
+  // }
+  // when (if (pipelinedMul) id_ctrl.mul else id_ctrl.div && (id_ctrl.alu_fn & aluFn.FN_DIV) =/= aluFn.FN_DIV) {
+  //   printf("EVENT %d Rocket (mul)\n", cycle_counter)
+  // }
+  // when (if (pipelinedMul) id_ctrl.div else id_ctrl.div && (id_ctrl.alu_fn & aluFn.FN_DIV) === aluFn.FN_DIV) {
+  //   printf("EVENT %d Rocket (div)\n", cycle_counter)
+  // }
+  // when (id_ctrl.fp && io.fpu.dec.ldst && io.fpu.dec.wen) {
+  //   printf("EVENT %d Rocket (fp load)\n", cycle_counter)
+  // }
+  // when (id_ctrl.fp && io.fpu.dec.ldst && !io.fpu.dec.wen) {
+  //   printf("EVENT %d Rocket (fp store)\n", cycle_counter)
+  // }
+  // when (id_ctrl.fp && io.fpu.dec.fma && io.fpu.dec.swap23) {
+  //   printf("EVENT %d Rocket (fp add)\n", cycle_counter)
+  // }
+  // when (id_ctrl.fp && io.fpu.dec.fma && !io.fpu.dec.swap23 && !io.fpu.dec.ren3) {
+  //   printf("EVENT %d Rocket (fp mul)\n", cycle_counter)
+  // }
+  // when (id_ctrl.fp && io.fpu.dec.fma && io.fpu.dec.ren3) {
+  //   printf("EVENT %d Rocket (fp mul-add)\n", cycle_counter)
+  // }
+  // when (id_ctrl.fp && (io.fpu.dec.div || io.fpu.dec.sqrt)) {
+  //   printf("EVENT %d Rocket (fp div/sqrt)\n", cycle_counter)
+  // }
+  // when (id_ctrl.fp && !(io.fpu.dec.ldst || io.fpu.dec.fma || io.fpu.dec.div || io.fpu.dec.sqrt)) {
+  //   printf("EVENT %d Rocket (fp other)\n", cycle_counter)
+  // }
+  // when (id_ex_hazard && ex_ctrl.mem || id_mem_hazard && mem_ctrl.mem || id_wb_hazard && wb_ctrl.mem) {
+  //   printf("EVENT %d Rocket (load-use interlock)\n", cycle_counter)
+  // }
+  // when (id_sboard_hazard) {
+  //   printf("EVENT %d Rocket (long-latency interlock)\n", cycle_counter)
+  // }
+  // when (id_ex_hazard && ex_ctrl.csr =/= CSR.N || id_mem_hazard && mem_ctrl.csr =/= CSR.N || id_wb_hazard && wb_ctrl.csr =/= CSR.N) {
+  //   printf("EVENT %d Rocket (csr interlock)\n", cycle_counter)
+  // }
+  // when (icache_blocked) {
+  //   printf("EVENT %d Rocket (I$ blocked)\n", cycle_counter)
+  // }
+  // when (id_ctrl.mem && dcache_blocked) {
+  //   printf("EVENT %d Rocket (D$ blocked)\n", cycle_counter)
+  // }
+  // when (take_pc_mem && mem_direction_misprediction) {
+  //   printf("EVENT %d Rocket (branch misprediction)\n", cycle_counter)
+  // }
+  // when (take_pc_mem && mem_misprediction && mem_cfi && !mem_direction_misprediction && !icache_blocked) {
+  //   printf("EVENT %d Rocket (control-flow target misprediction)\n", cycle_counter)
+  // }
+  // when (wb_reg_flush_pipe) {
+  //   printf("EVENT %d Rocket (flush)\n", cycle_counter)
+  // }
+  // when (replay_wb) {
+  //   printf("EVENT %d Rocket (replay)\n", cycle_counter)
+  // }
+  // when (id_ex_hazard && (ex_ctrl.mul || ex_ctrl.div) || id_mem_hazard && (mem_ctrl.mul || mem_ctrl.div) || id_wb_hazard && wb_ctrl.div) {
+  //   printf("EVENT %d Rocket (mul/div interlock)\n", cycle_counter)
+  // }
+  // when (id_ex_hazard && ex_ctrl.fp || id_mem_hazard && mem_ctrl.fp || id_wb_hazard && wb_ctrl.fp || id_ctrl.fp && id_stall_fpu) {
+  //   printf("EVENT %d Rocket (fp interlock)\n", cycle_counter)
+  // }
   when (io.imem.perf.acquire) {
-    printf("EVENT %d Rocket (I$ miss)\n", cycle_counter)
+    printf("EVNT %d Rocket (I$ miss)\n", coreMonitorBundle.timer)
   }
   when (io.dmem.perf.acquire) {
-    printf("EVENT %d Rocket (D$ miss)\n", cycle_counter)
+    printf("EVNT %d Rocket (D$ miss)\n", coreMonitorBundle.timer)
   }
-  when (io.dmem.perf.release) {
-    printf("EVENT %d Rocket (D$ release)\n", cycle_counter)
-  }
+  // when (io.dmem.perf.release) {
+  //   printf("EVENT %d Rocket (D$ release)\n", cycle_counter)
+  // }
   when (io.imem.perf.tlbMiss) {
-    printf("EVENT %d Rocket (ITLB miss)\n", cycle_counter)
+    printf("EVNT %d Rocket (ITLB miss)\n", coreMonitorBundle.timer)
   }
   when (io.dmem.perf.tlbMiss) {
-    printf("EVENT %d Rocket (DTLB miss)\n", cycle_counter)
+    printf("EVNT %d Rocket (DTLB miss)\n", coreMonitorBundle.timer)
   }
   when (io.ptw.perf.l2miss) {
-    printf("EVENT %d Rocket (L2 TLB miss)\n", cycle_counter)
+    printf("EVNT %d Rocket (L2 TLB miss)\n", coreMonitorBundle.timer)
   }
 
   if (enableCommitLog) {
