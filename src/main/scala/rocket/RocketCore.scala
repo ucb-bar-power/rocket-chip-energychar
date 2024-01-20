@@ -1062,6 +1062,63 @@ class Rocket(tile: RocketTile)(implicit p: Parameters) extends CoreModule()(p)
   coreMonitorBundle.excpt := csr.io.trace(0).exception
   coreMonitorBundle.priv_mode := csr.io.trace(0).priv
 
+  if (enableCommitLog) {
+    val t = csr.io.trace(0)
+    val rd = wb_waddr
+    val wfd = wb_ctrl.wfd
+    val wxd = wb_ctrl.wxd
+    val has_data = wb_wen && !wb_set_sboard
+
+    when (t.valid && !t.exception) {
+      when (wfd) {
+        printf ("%d 0x%x (0x%x) f%d p%d 0xXXXXXXXXXXXXXXXX\n", t.priv, t.iaddr, t.insn, rd, rd+32.U)
+      }
+      .elsewhen (wxd && rd =/= 0.U && has_data) {
+        printf ("%d 0x%x (0x%x) x%d 0x%x\n", t.priv, t.iaddr, t.insn, rd, rf_wdata)
+      }
+      .elsewhen (wxd && rd =/= 0.U && !has_data) {
+        printf ("%d 0x%x (0x%x) x%d p%d 0xXXXXXXXXXXXXXXXX\n", t.priv, t.iaddr, t.insn, rd, rd)
+      }
+      .otherwise {
+        printf ("%d 0x%x (0x%x)\n", t.priv, t.iaddr, t.insn)
+      }
+    }
+
+    when (ll_wen && rf_waddr =/= 0.U) {
+      printf ("x%d p%d 0x%x\n", rf_waddr, rf_waddr, rf_wdata)
+    }
+  }
+  else {
+    when (csr.io.trace(0).valid) {
+      printf("C%d: %d [%d] pc=[%x] W[r%d=%x][%d] R[r%d=%x] R[r%d=%x] inst=[%x] DASM(%x)\n",
+         io.hartid, coreMonitorBundle.timer, coreMonitorBundle.valid,
+         coreMonitorBundle.pc,
+         Mux(wb_ctrl.wxd || wb_ctrl.wfd, coreMonitorBundle.wrdst, 0.U),
+         Mux(coreMonitorBundle.wrenx, coreMonitorBundle.wrdata, 0.U),
+         coreMonitorBundle.wrenx,
+         Mux(wb_ctrl.rxs1 || wb_ctrl.rfs1, coreMonitorBundle.rd0src, 0.U),
+         Mux(wb_ctrl.rxs1 || wb_ctrl.rfs1, coreMonitorBundle.rd0val, 0.U),
+         Mux(wb_ctrl.rxs2 || wb_ctrl.rfs2, coreMonitorBundle.rd1src, 0.U),
+         Mux(wb_ctrl.rxs2 || wb_ctrl.rfs2, coreMonitorBundle.rd1val, 0.U),
+         coreMonitorBundle.inst, coreMonitorBundle.inst)
+    }
+  }
+  when (io.imem.perf.acquire) {
+    printf("EVNT %d Rocket (I$ miss)\n", coreMonitorBundle.timer)
+  }
+  when (io.dmem.perf.acquire) {
+    printf("EVNT %d Rocket (D$ miss)\n", coreMonitorBundle.timer)
+  }
+  when (io.imem.perf.tlbMiss) {
+    printf("EVNT %d Rocket (ITLB miss)\n", coreMonitorBundle.timer)
+  }
+  when (io.dmem.perf.tlbMiss) {
+    printf("EVNT %d Rocket (DTLB miss)\n", coreMonitorBundle.timer)
+  }
+  when (io.ptw.perf.l2miss) {
+    printf("EVNT %d Rocket (L2 TLB miss)\n", coreMonitorBundle.timer)
+  }
+
   val (cycle_counter, _) = Counter(true.B, 1000000000) // timeout cycles
 
   // when (false.B) {
@@ -1151,66 +1208,10 @@ class Rocket(tile: RocketTile)(implicit p: Parameters) extends CoreModule()(p)
   // when (id_ex_hazard && ex_ctrl.fp || id_mem_hazard && mem_ctrl.fp || id_wb_hazard && wb_ctrl.fp || id_ctrl.fp && id_stall_fpu) {
   //   printf("EVENT %d Rocket (fp interlock)\n", cycle_counter)
   // }
-  when (io.imem.perf.acquire) {
-    printf("EVNT %d Rocket (I$ miss)\n", coreMonitorBundle.timer)
-  }
-  when (io.dmem.perf.acquire) {
-    printf("EVNT %d Rocket (D$ miss)\n", coreMonitorBundle.timer)
-  }
   // when (io.dmem.perf.release) {
   //   printf("EVENT %d Rocket (D$ release)\n", cycle_counter)
   // }
-  when (io.imem.perf.tlbMiss) {
-    printf("EVNT %d Rocket (ITLB miss)\n", coreMonitorBundle.timer)
-  }
-  when (io.dmem.perf.tlbMiss) {
-    printf("EVNT %d Rocket (DTLB miss)\n", coreMonitorBundle.timer)
-  }
-  when (io.ptw.perf.l2miss) {
-    printf("EVNT %d Rocket (L2 TLB miss)\n", coreMonitorBundle.timer)
-  }
 
-  if (enableCommitLog) {
-    val t = csr.io.trace(0)
-    val rd = wb_waddr
-    val wfd = wb_ctrl.wfd
-    val wxd = wb_ctrl.wxd
-    val has_data = wb_wen && !wb_set_sboard
-
-    when (t.valid && !t.exception) {
-      when (wfd) {
-        printf ("%d 0x%x (0x%x) f%d p%d 0xXXXXXXXXXXXXXXXX\n", t.priv, t.iaddr, t.insn, rd, rd+32.U)
-      }
-      .elsewhen (wxd && rd =/= 0.U && has_data) {
-        printf ("%d 0x%x (0x%x) x%d 0x%x\n", t.priv, t.iaddr, t.insn, rd, rf_wdata)
-      }
-      .elsewhen (wxd && rd =/= 0.U && !has_data) {
-        printf ("%d 0x%x (0x%x) x%d p%d 0xXXXXXXXXXXXXXXXX\n", t.priv, t.iaddr, t.insn, rd, rd)
-      }
-      .otherwise {
-        printf ("%d 0x%x (0x%x)\n", t.priv, t.iaddr, t.insn)
-      }
-    }
-
-    when (ll_wen && rf_waddr =/= 0.U) {
-      printf ("x%d p%d 0x%x\n", rf_waddr, rf_waddr, rf_wdata)
-    }
-  }
-  else {
-    when (csr.io.trace(0).valid) {
-      printf("C%d: %d [%d] pc=[%x] W[r%d=%x][%d] R[r%d=%x] R[r%d=%x] inst=[%x] DASM(%x)\n",
-         io.hartid, coreMonitorBundle.timer, coreMonitorBundle.valid,
-         coreMonitorBundle.pc,
-         Mux(wb_ctrl.wxd || wb_ctrl.wfd, coreMonitorBundle.wrdst, 0.U),
-         Mux(coreMonitorBundle.wrenx, coreMonitorBundle.wrdata, 0.U),
-         coreMonitorBundle.wrenx,
-         Mux(wb_ctrl.rxs1 || wb_ctrl.rfs1, coreMonitorBundle.rd0src, 0.U),
-         Mux(wb_ctrl.rxs1 || wb_ctrl.rfs1, coreMonitorBundle.rd0val, 0.U),
-         Mux(wb_ctrl.rxs2 || wb_ctrl.rfs2, coreMonitorBundle.rd1src, 0.U),
-         Mux(wb_ctrl.rxs2 || wb_ctrl.rfs2, coreMonitorBundle.rd1val, 0.U),
-         coreMonitorBundle.inst, coreMonitorBundle.inst)
-    }
-  }
 
   // CoreMonitorBundle for late latency writes
   val xrfWriteBundle = Wire(new CoreMonitorBundle(xLen, fLen))
