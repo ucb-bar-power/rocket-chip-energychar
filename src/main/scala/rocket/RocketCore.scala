@@ -1062,154 +1062,196 @@ class Rocket(tile: RocketTile)(implicit p: Parameters) extends CoreModule()(p)
   coreMonitorBundle.excpt := csr.io.trace(0).exception
   coreMonitorBundle.priv_mode := csr.io.trace(0).priv
 
-  if (enableCommitLog) {
-    val t = csr.io.trace(0)
-    val rd = wb_waddr
-    val wfd = wb_ctrl.wfd
-    val wxd = wb_ctrl.wxd
-    val has_data = wb_wen && !wb_set_sboard
+  // if (enableCommitLog) {
+  //   val t = csr.io.trace(0)
+  //   val rd = wb_waddr
+  //   val wfd = wb_ctrl.wfd
+  //   val wxd = wb_ctrl.wxd
+  //   val has_data = wb_wen && !wb_set_sboard
 
-    when (t.valid && !t.exception) {
-      when (wfd) {
-        printf ("%d 0x%x (0x%x) f%d p%d 0xXXXXXXXXXXXXXXXX\n", t.priv, t.iaddr, t.insn, rd, rd+32.U)
-      }
-      .elsewhen (wxd && rd =/= 0.U && has_data) {
-        printf ("%d 0x%x (0x%x) x%d 0x%x\n", t.priv, t.iaddr, t.insn, rd, rf_wdata)
-      }
-      .elsewhen (wxd && rd =/= 0.U && !has_data) {
-        printf ("%d 0x%x (0x%x) x%d p%d 0xXXXXXXXXXXXXXXXX\n", t.priv, t.iaddr, t.insn, rd, rd)
-      }
-      .otherwise {
-        printf ("%d 0x%x (0x%x)\n", t.priv, t.iaddr, t.insn)
-      }
-    }
+  //   when (t.valid && !t.exception) {
+  //     when (wfd) {
+  //       printf ("%d 0x%x (0x%x) f%d p%d 0xXXXXXXXXXXXXXXXX\n", t.priv, t.iaddr, t.insn, rd, rd+32.U)
+  //     }
+  //     .elsewhen (wxd && rd =/= 0.U && has_data) {
+  //       printf ("%d 0x%x (0x%x) x%d 0x%x\n", t.priv, t.iaddr, t.insn, rd, rf_wdata)
+  //     }
+  //     .elsewhen (wxd && rd =/= 0.U && !has_data) {
+  //       printf ("%d 0x%x (0x%x) x%d p%d 0xXXXXXXXXXXXXXXXX\n", t.priv, t.iaddr, t.insn, rd, rd)
+  //     }
+  //     .otherwise {
+  //       printf ("%d 0x%x (0x%x)\n", t.priv, t.iaddr, t.insn)
+  //     }
+  //   }
 
-    when (ll_wen && rf_waddr =/= 0.U) {
-      printf ("x%d p%d 0x%x\n", rf_waddr, rf_waddr, rf_wdata)
-    }
-  }
-  else {
-    when (csr.io.trace(0).valid) {
-      printf("C%d: %d [%d] pc=[%x] W[r%d=%x][%d] R[r%d=%x] R[r%d=%x] inst=[%x] DASM(%x)\n",
-         io.hartid, coreMonitorBundle.timer, coreMonitorBundle.valid,
-         coreMonitorBundle.pc,
-         Mux(wb_ctrl.wxd || wb_ctrl.wfd, coreMonitorBundle.wrdst, 0.U),
-         Mux(coreMonitorBundle.wrenx, coreMonitorBundle.wrdata, 0.U),
-         coreMonitorBundle.wrenx,
-         Mux(wb_ctrl.rxs1 || wb_ctrl.rfs1, coreMonitorBundle.rd0src, 0.U),
-         Mux(wb_ctrl.rxs1 || wb_ctrl.rfs1, coreMonitorBundle.rd0val, 0.U),
-         Mux(wb_ctrl.rxs2 || wb_ctrl.rfs2, coreMonitorBundle.rd1src, 0.U),
-         Mux(wb_ctrl.rxs2 || wb_ctrl.rfs2, coreMonitorBundle.rd1val, 0.U),
-         coreMonitorBundle.inst, coreMonitorBundle.inst)
-    }
-  }
-  when (io.imem.perf.acquire) {
-    printf("EVNT %d Rocket (I$ miss)\n", coreMonitorBundle.timer)
-  }
-  when (io.dmem.perf.acquire) {
-    printf("EVNT %d Rocket (D$ miss)\n", coreMonitorBundle.timer)
-  }
-  when (io.imem.perf.tlbMiss) {
-    printf("EVNT %d Rocket (ITLB miss)\n", coreMonitorBundle.timer)
-  }
-  when (io.dmem.perf.tlbMiss) {
-    printf("EVNT %d Rocket (DTLB miss)\n", coreMonitorBundle.timer)
-  }
-  when (io.ptw.perf.l2miss) {
-    printf("EVNT %d Rocket (L2 TLB miss)\n", coreMonitorBundle.timer)
-  }
+  //   when (ll_wen && rf_waddr =/= 0.U) {
+  //     printf ("x%d p%d 0x%x\n", rf_waddr, rf_waddr, rf_wdata)
+  //   }
+  // }
+  // else {
+  //   when (csr.io.trace(0).valid) {
+  //     printf("C%d: %d [%d] pc=[%x] W[r%d=%x][%d] R[r%d=%x] R[r%d=%x] inst=[%x] DASM(%x)\n",
+  //        io.hartid, coreMonitorBundle.timer, coreMonitorBundle.valid,
+  //        coreMonitorBundle.pc,
+  //        Mux(wb_ctrl.wxd || wb_ctrl.wfd, coreMonitorBundle.wrdst, 0.U),
+  //        Mux(coreMonitorBundle.wrenx, coreMonitorBundle.wrdata, 0.U),
+  //        coreMonitorBundle.wrenx,
+  //        Mux(wb_ctrl.rxs1 || wb_ctrl.rfs1, coreMonitorBundle.rd0src, 0.U),
+  //        Mux(wb_ctrl.rxs1 || wb_ctrl.rfs1, coreMonitorBundle.rd0val, 0.U),
+  //        Mux(wb_ctrl.rxs2 || wb_ctrl.rfs2, coreMonitorBundle.rd1src, 0.U),
+  //        Mux(wb_ctrl.rxs2 || wb_ctrl.rfs2, coreMonitorBundle.rd1val, 0.U),
+  //        coreMonitorBundle.inst, coreMonitorBundle.inst)
+  //   }
+  // }
+  val t = csr.io.trace(0)
+  val rd = wb_waddr
+  val wfd = wb_ctrl.wfd
+  val wxd = wb_ctrl.wxd
+  val has_data = wb_wen && !wb_set_sboard
 
   val (cycle_counter, _) = Counter(true.B, 1000000000) // timeout cycles
+  printf("CYCLE %d\n", cycle_counter)
+
+  // >> exec log
+  when (csr.io.trace(0).valid) {
+    printf("C%d: %d [%d] pc=[%x] W[r%d=%x][%d] R[r%d=%x] R[r%d=%x] inst=[%x] DASM(%x)\n",
+        io.hartid, coreMonitorBundle.timer, coreMonitorBundle.valid,
+        coreMonitorBundle.pc,
+        Mux(wb_ctrl.wxd || wb_ctrl.wfd, coreMonitorBundle.wrdst, 0.U),
+        Mux(coreMonitorBundle.wrenx, coreMonitorBundle.wrdata, 0.U),
+        coreMonitorBundle.wrenx,
+        Mux(wb_ctrl.rxs1 || wb_ctrl.rfs1, coreMonitorBundle.rd0src, 0.U),
+        Mux(wb_ctrl.rxs1 || wb_ctrl.rfs1, coreMonitorBundle.rd0val, 0.U),
+        Mux(wb_ctrl.rxs2 || wb_ctrl.rfs2, coreMonitorBundle.rd1src, 0.U),
+        Mux(wb_ctrl.rxs2 || wb_ctrl.rfs2, coreMonitorBundle.rd1val, 0.U),
+        coreMonitorBundle.inst, coreMonitorBundle.inst)
+  } // << exec log
+
+  // >> commit log
+  when (t.valid && !t.exception) {
+    when (wfd) {
+      printf ("%d 0x%x (0x%x) f%d p%d 0xXXXXXXXXXXXXXXXX\n", t.priv, t.iaddr, t.insn, rd, rd+32.U)
+    }
+    .elsewhen (wxd && rd =/= 0.U && has_data) {
+      printf ("%d 0x%x (0x%x) x%d 0x%x\n", t.priv, t.iaddr, t.insn, rd, rf_wdata)
+    }
+    .elsewhen (wxd && rd =/= 0.U && !has_data) {
+      printf ("%d 0x%x (0x%x) x%d p%d 0xXXXXXXXXXXXXXXXX\n", t.priv, t.iaddr, t.insn, rd, rd)
+    }
+    .otherwise {
+      printf ("%d 0x%x (0x%x)\n", t.priv, t.iaddr, t.insn)
+    }
+  }
+  when (ll_wen && rf_waddr =/= 0.U) {
+    printf ("x%d p%d 0x%x\n", rf_waddr, rf_waddr, rf_wdata)
+  } // << commitlog
+
+  // >> perf events
+  when (io.imem.perf.acquire) {
+    printf("EVENT %d Rocket (icache_miss)\n", coreMonitorBundle.timer)
+  }
+  when (io.dmem.perf.acquire) {
+    printf("EVENT %d Rocket (dcache_miss)\n", coreMonitorBundle.timer)
+  }
+  when (io.imem.perf.tlbMiss) {
+    printf("EVENT %d Rocket (itlb_miss)\n", coreMonitorBundle.timer)
+  }
+  when (io.dmem.perf.tlbMiss) {
+    printf("EVENT %d Rocket (dtlb_miss)\n", coreMonitorBundle.timer)
+  }
+  when (io.ptw.perf.l2miss) {
+    printf("EVENT %d Rocket (l2_tlb_miss)\n", coreMonitorBundle.timer)
+  }
+  when (take_pc_mem && mem_direction_misprediction) {
+    printf("EVENT %d Rocket (branch_mispred)\n", coreMonitorBundle.timer)
+  }
+  when (take_pc_mem && mem_misprediction && mem_cfi && !mem_direction_misprediction && !icache_blocked) {
+    printf("EVENT %d Rocket (ctrl_flow_target_mispred)\n", coreMonitorBundle.timer)
+  } // << perf events
 
   // when (false.B) {
-  //   printf("EVENT %d Rocket (exception)\n", cycle_counter)
+  //   printf("EVENT %d Rocket (exception)\n", coreMonitorBundle.timer)
   // }
   // when (id_ctrl.mem && id_ctrl.mem_cmd === M_XRD && !id_ctrl.fp) {
-  //   printf("EVENT %d Rocket (load)\n", cycle_counter)
+  //   printf("EVENT %d Rocket (load)\n", coreMonitorBundle.timer)
   // }
   // when (id_ctrl.mem && id_ctrl.mem_cmd === M_XWR && !id_ctrl.fp) {
-  //   printf("EVENT %d Rocket (store)\n", cycle_counter)
+  //   printf("EVENT %d Rocket (store)\n", coreMonitorBundle.timer)
   // }
   // when (usingAtomics.B && id_ctrl.mem && (isAMO(id_ctrl.mem_cmd) || id_ctrl.mem_cmd.isOneOf(M_XLR, M_XSC))) {
-  //   printf("EVENT %d Rocket (amo)\n", cycle_counter)
+  //   printf("EVENT %d Rocket (amo)\n", coreMonitorBundle.timer)
   // }
   // when (id_ctrl.csr =/= CSR.N) {
-  //   printf("EVENT %d Rocket (system)\n", cycle_counter)
+  //   printf("EVENT %d Rocket (system)\n", coreMonitorBundle.timer)
   // }
   // when (id_ctrl.wxd && !(id_ctrl.jal || id_ctrl.jalr || id_ctrl.mem || id_ctrl.fp || id_ctrl.mul || id_ctrl.div || id_ctrl.csr =/= CSR.N)) {
-  //   printf("EVENT %d Rocket (arith)\n", cycle_counter)
+  //   printf("EVENT %d Rocket (arith)\n", coreMonitorBundle.timer)
   // }
   // when (id_ctrl.branch) {
-  //   printf("EVENT %d Rocket (branch)\n", cycle_counter)
+  //   printf("EVENT %d Rocket (branch)\n", coreMonitorBundle.timer)
   // }
   // when (id_ctrl.jal) {
-  //   printf("EVENT %d Rocket (jal)\n", cycle_counter)
+  //   printf("EVENT %d Rocket (jal)\n", coreMonitorBundle.timer)
   // }
   // when (id_ctrl.jalr) {
-  //   printf("EVENT %d Rocket (jalr)\n", cycle_counter)
+  //   printf("EVENT %d Rocket (jalr)\n", coreMonitorBundle.timer)
   // }
   // when (if (pipelinedMul) id_ctrl.mul else id_ctrl.div && (id_ctrl.alu_fn & aluFn.FN_DIV) =/= aluFn.FN_DIV) {
-  //   printf("EVENT %d Rocket (mul)\n", cycle_counter)
+  //   printf("EVENT %d Rocket (mul)\n", coreMonitorBundle.timer)
   // }
   // when (if (pipelinedMul) id_ctrl.div else id_ctrl.div && (id_ctrl.alu_fn & aluFn.FN_DIV) === aluFn.FN_DIV) {
-  //   printf("EVENT %d Rocket (div)\n", cycle_counter)
+  //   printf("EVENT %d Rocket (div)\n", coreMonitorBundle.timer)
   // }
   // when (id_ctrl.fp && io.fpu.dec.ldst && io.fpu.dec.wen) {
-  //   printf("EVENT %d Rocket (fp load)\n", cycle_counter)
+  //   printf("EVENT %d Rocket (fp load)\n", coreMonitorBundle.timer)
   // }
   // when (id_ctrl.fp && io.fpu.dec.ldst && !io.fpu.dec.wen) {
-  //   printf("EVENT %d Rocket (fp store)\n", cycle_counter)
+  //   printf("EVENT %d Rocket (fp store)\n", coreMonitorBundle.timer)
   // }
   // when (id_ctrl.fp && io.fpu.dec.fma && io.fpu.dec.swap23) {
-  //   printf("EVENT %d Rocket (fp add)\n", cycle_counter)
+  //   printf("EVENT %d Rocket (fp add)\n", coreMonitorBundle.timer)
   // }
   // when (id_ctrl.fp && io.fpu.dec.fma && !io.fpu.dec.swap23 && !io.fpu.dec.ren3) {
-  //   printf("EVENT %d Rocket (fp mul)\n", cycle_counter)
+  //   printf("EVENT %d Rocket (fp mul)\n", coreMonitorBundle.timer)
   // }
   // when (id_ctrl.fp && io.fpu.dec.fma && io.fpu.dec.ren3) {
-  //   printf("EVENT %d Rocket (fp mul-add)\n", cycle_counter)
+  //   printf("EVENT %d Rocket (fp mul-add)\n", coreMonitorBundle.timer)
   // }
   // when (id_ctrl.fp && (io.fpu.dec.div || io.fpu.dec.sqrt)) {
-  //   printf("EVENT %d Rocket (fp div/sqrt)\n", cycle_counter)
+  //   printf("EVENT %d Rocket (fp div/sqrt)\n", coreMonitorBundle.timer)
   // }
   // when (id_ctrl.fp && !(io.fpu.dec.ldst || io.fpu.dec.fma || io.fpu.dec.div || io.fpu.dec.sqrt)) {
-  //   printf("EVENT %d Rocket (fp other)\n", cycle_counter)
+  //   printf("EVENT %d Rocket (fp other)\n", coreMonitorBundle.timer)
   // }
   // when (id_ex_hazard && ex_ctrl.mem || id_mem_hazard && mem_ctrl.mem || id_wb_hazard && wb_ctrl.mem) {
-  //   printf("EVENT %d Rocket (load-use interlock)\n", cycle_counter)
+  //   printf("EVENT %d Rocket (load-use interlock)\n", coreMonitorBundle.timer)
   // }
   // when (id_sboard_hazard) {
-  //   printf("EVENT %d Rocket (long-latency interlock)\n", cycle_counter)
+  //   printf("EVENT %d Rocket (long-latency interlock)\n", coreMonitorBundle.timer)
   // }
   // when (id_ex_hazard && ex_ctrl.csr =/= CSR.N || id_mem_hazard && mem_ctrl.csr =/= CSR.N || id_wb_hazard && wb_ctrl.csr =/= CSR.N) {
-  //   printf("EVENT %d Rocket (csr interlock)\n", cycle_counter)
+  //   printf("EVENT %d Rocket (csr interlock)\n", coreMonitorBundle.timer)
   // }
   // when (icache_blocked) {
-  //   printf("EVENT %d Rocket (I$ blocked)\n", cycle_counter)
+  //   printf("EVENT %d Rocket (I$ blocked)\n", coreMonitorBundle.timer)
   // }
   // when (id_ctrl.mem && dcache_blocked) {
-  //   printf("EVENT %d Rocket (D$ blocked)\n", cycle_counter)
-  // }
-  // when (take_pc_mem && mem_direction_misprediction) {
-  //   printf("EVENT %d Rocket (branch misprediction)\n", cycle_counter)
-  // }
-  // when (take_pc_mem && mem_misprediction && mem_cfi && !mem_direction_misprediction && !icache_blocked) {
-  //   printf("EVENT %d Rocket (control-flow target misprediction)\n", cycle_counter)
+  //   printf("EVENT %d Rocket (D$ blocked)\n", coreMonitorBundle.timer)
   // }
   // when (wb_reg_flush_pipe) {
-  //   printf("EVENT %d Rocket (flush)\n", cycle_counter)
+  //   printf("EVENT %d Rocket (flush)\n", coreMonitorBundle.timer)
   // }
   // when (replay_wb) {
-  //   printf("EVENT %d Rocket (replay)\n", cycle_counter)
+  //   printf("EVENT %d Rocket (replay)\n", coreMonitorBundle.timer)
   // }
   // when (id_ex_hazard && (ex_ctrl.mul || ex_ctrl.div) || id_mem_hazard && (mem_ctrl.mul || mem_ctrl.div) || id_wb_hazard && wb_ctrl.div) {
-  //   printf("EVENT %d Rocket (mul/div interlock)\n", cycle_counter)
+  //   printf("EVENT %d Rocket (mul/div interlock)\n", coreMonitorBundle.timer)
   // }
   // when (id_ex_hazard && ex_ctrl.fp || id_mem_hazard && mem_ctrl.fp || id_wb_hazard && wb_ctrl.fp || id_ctrl.fp && id_stall_fpu) {
-  //   printf("EVENT %d Rocket (fp interlock)\n", cycle_counter)
+  //   printf("EVENT %d Rocket (fp interlock)\n", coreMonitorBundle.timer)
   // }
   // when (io.dmem.perf.release) {
-  //   printf("EVENT %d Rocket (D$ release)\n", cycle_counter)
+  //   printf("EVENT %d Rocket (D$ release)\n", coreMonitorBundle.timer)
   // }
 
 
