@@ -137,7 +137,9 @@ trait HasCoreParameters extends HasTileParameters {
 
   // Print out log of committed instructions and their writeback values.
   // Requires post-processing due to out-of-order writebacks.
-  val enableCommitLog = false
+  // val enableCommitLog = false
+  // energy custom
+  val enableCommitLog = true
 
 }
 
