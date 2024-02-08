@@ -1110,7 +1110,7 @@ class Rocket(tile: RocketTile)(implicit p: Parameters) extends CoreModule()(p)
   val has_data = wb_wen && !wb_set_sboard
 
   val (cycle_counter, _) = Counter(true.B, 1000000000) // timeout cycles
-  printf("CYCLE %d\n", cycle_counter)
+  printf("CYCLE %d FETCH pc=[%x] inst=[%x]\n", cycle_counter, io.imem.resp.bits.pc, io.imem.resp.bits.data)
 
   // >> exec log
   when (csr.io.trace(0).valid) {
@@ -1148,25 +1148,25 @@ class Rocket(tile: RocketTile)(implicit p: Parameters) extends CoreModule()(p)
 
   // >> perf events
   when (io.imem.perf.acquire) {
-    printf("EVENT %d Rocket (icache_miss)\n", coreMonitorBundle.timer)
+    printf("EVENT %d Rocket icache_miss 0x%x\n", coreMonitorBundle.timer, io.imem.resp.bits.pc)
   }
   when (io.dmem.perf.acquire) {
-    printf("EVENT %d Rocket (dcache_miss)\n", coreMonitorBundle.timer)
+    printf("EVENT %d Rocket dcache_miss\n", coreMonitorBundle.timer)
   }
   when (io.imem.perf.tlbMiss) {
-    printf("EVENT %d Rocket (itlb_miss)\n", coreMonitorBundle.timer)
+    printf("EVENT %d Rocket itlb_miss\n", coreMonitorBundle.timer)
   }
   when (io.dmem.perf.tlbMiss) {
-    printf("EVENT %d Rocket (dtlb_miss)\n", coreMonitorBundle.timer)
+    printf("EVENT %d Rocket dtlb_miss\n", coreMonitorBundle.timer)
   }
   when (io.ptw.perf.l2miss) {
-    printf("EVENT %d Rocket (l2_tlb_miss)\n", coreMonitorBundle.timer)
+    printf("EVENT %d Rocket l2_tlb_miss\n", coreMonitorBundle.timer)
   }
   when (take_pc_mem && mem_direction_misprediction) {
-    printf("EVENT %d Rocket (branch_mispred)\n", coreMonitorBundle.timer)
+    printf("EVENT %d Rocket branch_mispred\n", coreMonitorBundle.timer)
   }
   when (take_pc_mem && mem_misprediction && mem_cfi && !mem_direction_misprediction && !icache_blocked) {
-    printf("EVENT %d Rocket (ctrl_flow_target_mispred)\n", coreMonitorBundle.timer)
+    printf("EVENT %d Rocket ctrl_flow_target_mispred\n", coreMonitorBundle.timer)
   } // << perf events
 
   // when (false.B) {
